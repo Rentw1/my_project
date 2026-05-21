@@ -64,9 +64,10 @@ async def analyze_food_image(image_bytes: bytes) -> dict:
     b64 = encode_image(image_bytes)
     prompt = (
         "Ты — эксперт-диетолог. Посмотри на фото еды и верни ТОЛЬКО JSON (без markdown, без ```). "
+        "ВАЖНО: все названия пиши ТОЛЬКО на русском языке. "
         "Формат: "
-        '{"name":"название блюда","calories":число,"protein":число,"fat":число,"carbs":число,'
-        '"weight":число,"items":[{"name":"...","calories":число}]} '
+        '{"name":"название по-русски","calories":число,"protein":число,"fat":число,"carbs":число,'
+        '"weight":число,"items":[{"name":"составляющая по-русски","calories":число}]} '
         "Все числа целые, вес в граммах. Если еды нет — верни {\"error\":\"no_food\"}."
     )
     try:
@@ -549,8 +550,12 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     q   = update.callback_query
     uid = q.from_user.id
-    await q.answer()
     data = q.data
+    logger.info(f"Callback from {uid}: {data}")
+    try:
+        await q.answer()
+    except Exception as e:
+        logger.warning(f"q.answer() failed: {e}")
 
     # ── Удалить конкретный приём ──────────────────────────
     if data.startswith("del:"):
@@ -673,7 +678,7 @@ def main():
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
 
     logger.info("✅ Bot started!")
-    app.run_polling(drop_pending_updates=True)
+    app.run_polling(drop_pending_updates=False)
 
 
 if __name__ == "__main__":
