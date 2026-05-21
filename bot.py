@@ -119,8 +119,8 @@ def make_daily_chart(user_id: int) -> BytesIO | None:
 
     fig, ax = plt.subplots(figsize=(8, 4))
     bars = ax.bar(names, cals, color=colors, edgecolor='white', linewidth=1.2)
-    ax.axhline(goal, color='tomato', linestyle='--', linewidth=1.5, label=f'Цель {goal} ккал')
-    ax.set_title("🍽 Приёмы пищи сегодня", fontsize=14, fontweight='bold', pad=12)
+    ax.axhline(goal, color='tomato', linestyle='--', linewidth=1.5, label=f'Цель: {goal} ккал')
+    ax.set_title("Приёмы пищи сегодня", fontsize=14, fontweight='bold', pad=12)
     ax.set_ylabel("Калории (ккал)")
     ax.legend(fontsize=9)
     for bar, val in zip(bars, cals):
@@ -147,12 +147,12 @@ def make_week_chart(user_id: int) -> BytesIO | None:
     fig, ax = plt.subplots(figsize=(9, 4))
     ax.fill_between(dates, totals, alpha=0.18, color='steelblue')
     ax.plot(dates, totals, marker='o', color='steelblue', linewidth=2.2, markersize=8)
-    ax.axhline(goal, color='tomato', linestyle='--', linewidth=1.5, label=f'Цель {goal} ккал')
+    ax.axhline(goal, color='tomato', linestyle='--', linewidth=1.5, label=f'Цель: {goal} ккал')
     for d, v in zip(dates, totals):
         ax.annotate(str(v), (d, v), textcoords="offset points",
                     xytext=(0, 9), ha='center', fontsize=8, fontweight='bold')
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%d.%m'))
-    ax.set_title("📈 Калории за 7 дней", fontsize=14, fontweight='bold', pad=12)
+    ax.set_title("Калории за 7 дней", fontsize=14, fontweight='bold', pad=12)
     ax.set_ylabel("Ккал / день")
     ax.legend(fontsize=9)
     ax.set_ylim(0, max(max(totals) * 1.25, goal * 1.15))
@@ -174,8 +174,8 @@ def make_macros_chart(user_id: int) -> BytesIO | None:
     fig, ax = plt.subplots(figsize=(6, 5))
     ax.pie(values, labels=labels, colors=colors, explode=(0.05,)*3,
            autopct='%1.1f%%', startangle=140, textprops={'fontsize': 11})
-    ax.set_title("🥗 Макронутриенты сегодня", fontsize=13, fontweight='bold', pad=14)
-    ax.legend([f"{l}: {v}г" for l, v in zip(labels, values)],
+    ax.set_title("Макронутриенты сегодня", fontsize=13, fontweight='bold', pad=14)
+    ax.legend([f"{l}: {v} г" for l, v in zip(labels, values)],
               loc="lower center", bbox_to_anchor=(0.5, -0.12), ncol=3, fontsize=9)
     plt.tight_layout()
     buf = BytesIO()
@@ -678,7 +678,10 @@ def main():
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
 
     logger.info("✅ Bot started!")
-    app.run_polling(drop_pending_updates=False)
+    app.run_polling(
+        drop_pending_updates=True,
+        allowed_updates=["message", "callback_query", "inline_query"]
+    )
 
 
 if __name__ == "__main__":
