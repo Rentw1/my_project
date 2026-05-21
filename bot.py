@@ -479,13 +479,22 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
 #  ОБРАБОТКА ФОТО
 # ════════════════════════════════════════════════════════════
 
+async def safe_reply(msg, update, text, parse_mode=None, reply_markup=None):
+    try:
+        await msg.edit_text(text, parse_mode=parse_mode, reply_markup=reply_markup)
+    except Exception:
+        try:
+            await msg.delete()
+        except Exception:
+            pass
+        await update.message.reply_text(text, parse_mode=parse_mode, reply_markup=reply_markup)
+
+
 async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     uid = update.effective_user.id
     db.ensure_user(uid, update.effective_user.first_name)
 
-    msg = await update.message.reply_text(
-        "🔍 Анализирую фото...", reply_markup=MAIN_MENU
-    )
+    msg = await update.message.reply_text("🔍 Анализирую фото...")
 
     photo      = update.message.photo[-1]
     file       = await context.bot.get_file(photo.file_id)
@@ -502,7 +511,7 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "api_error":  "❌ Ошибка связи с AI. Попробуй через минуту.",
             "parse_error":"❌ Не смог распознать ответ AI. Попробуй ещё раз.",
         }
-        await msg.edit_text(err_map.get(result["error"], "❌ Ошибка. Попробуй ещё раз."))
+        await safe_reply(msg, update, err_map.get(result["error"], "❌ Ошибка. Попробуй ещё раз."))
         return
 
     goal      = db.get_goal(uid) or DAILY_GOAL_DEFAULT
@@ -529,10 +538,8 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"{progress_bar(today_sum, goal)}"
     )
 
-    await msg.edit_text(
-        text, parse_mode='Markdown',
-        reply_markup=after_photo_keyboard(meal_id)
-    )
+    await safe_reply(msg, update, text, parse_mode='Markdown',
+                     reply_markup=after_photo_keyboard(meal_id))
 
 
 # ════════════════════════════════════════════════════════════
